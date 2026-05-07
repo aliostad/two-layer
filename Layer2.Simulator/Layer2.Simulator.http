@@ -1,0 +1,13 @@
+@Layer2.Simulator_HostAddress = http://localhost:5196
+
+POST {{Layer2.Simulator_HostAddress}}/api/simulate
+Content-Type: application/json
+
+{
+	"operation": "insert"
+}
+
+###
+
+GET {{Layer2.Simulator_HostAddress}}/api/operations
+Accept: application/json

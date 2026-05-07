@@ -1,0 +1,20 @@
+services:
+  layer2-simulator:
+    build:
+      context: .
+      dockerfile: Layer2.Simulator/Dockerfile
+    image: layer2-simulator:local
+    ports:
+      - "5196:8080"
+
+  layer1-batchapi:
+    build:
+      context: .
+      dockerfile: Layer1.BatchApi/Dockerfile
+    image: layer1-batchapi:local
+    environment:
+      Layer2__BaseUrl: http://layer2-simulator:8080
+    ports:
+      - "5007:8080"
+    depends_on:
+      - layer2-simulator

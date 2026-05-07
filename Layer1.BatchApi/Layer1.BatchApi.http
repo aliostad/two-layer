@@ -1,0 +1,23 @@
+@Layer1.BatchApi_HostAddress = http://localhost:5007
+
+POST {{Layer1.BatchApi_HostAddress}}/api/batch/process
+Content-Type: application/json
+
+{
+	"items": [
+		{
+			"id": "1",
+			"operation": "insert"
+		},
+		{
+			"id": "2",
+			"operation": "query"
+		},
+		{
+			"id": "3",
+			"operation": "update"
+		}
+	]
+}
+
+###

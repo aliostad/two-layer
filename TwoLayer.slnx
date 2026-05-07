@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Layer1.BatchApi/Layer1.BatchApi.csproj" />
+  <Project Path="Layer2.Simulator/Layer2.Simulator.csproj" />
+</Solution>
