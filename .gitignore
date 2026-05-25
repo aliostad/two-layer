@@ -55,6 +55,8 @@ terraform/*.tfstate.backup
 terraform/crash.log
 terraform/override.tf
 terraform/*_override.tf
+terraform/tfplan
+terraform/*.tfplan
 
 # MSTest test Results
 [Tt]est[Rr]esult*/

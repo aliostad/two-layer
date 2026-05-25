@@ -1,6 +1,11 @@
 locals {
-  layer1_image = "${azurerm_container_registry.this.login_server}/layer1-batchapi:${var.image_tag}"
-  layer2_image = "${azurerm_container_registry.this.login_server}/layer2-simulator:${var.image_tag}"
+  # Full image references for build/push operations.
+  layer1_image_full = "${azurerm_container_registry.this.login_server}/layer1-batchapi:${var.image_tag}"
+  layer2_image_full = "${azurerm_container_registry.this.login_server}/layer2-simulator:${var.image_tag}"
+
+  # App Service expects repository:tag here, not a fully-qualified registry URL.
+  layer1_image_name = "layer1-batchapi:${var.image_tag}"
+  layer2_image_name = "layer2-simulator:${var.image_tag}"
   repo_root    = "${path.module}/.."
 }
 
@@ -26,16 +31,20 @@ resource "null_resource" "push_layer2" {
     csproj     = filemd5("${local.repo_root}/Layer2.Simulator/Layer2.Simulator.csproj")
     program    = filemd5("${local.repo_root}/Layer2.Simulator/Program.cs")
     image_tag  = var.image_tag
+    platform   = "linux-amd64"
+    builder    = "local-docker"
+    auth_mode  = "docker-config-auth"
   }
 
   provisioner "local-exec" {
     working_dir = local.repo_root
     command     = <<-EOT
-      docker build -f Layer2.Simulator/Dockerfile -t ${local.layer2_image} . && \
-      docker login ${azurerm_container_registry.this.login_server} \
-        --username ${azurerm_container_registry.this.admin_username} \
-        --password ${azurerm_container_registry.this.admin_password} && \
-      docker push ${local.layer2_image}
+      export DOCKER_CONFIG="/tmp/two-layer-docker" && \
+      mkdir -p "$DOCKER_CONFIG" && \
+      AUTH=$(printf "%s:%s" "${azurerm_container_registry.this.admin_username}" "${azurerm_container_registry.this.admin_password}" | base64 | tr -d '\n') && \
+      printf '{"auths":{"%s":{"auth":"%s"}}}\n' "${azurerm_container_registry.this.login_server}" "$AUTH" > "$DOCKER_CONFIG/config.json" && \
+      docker --config "$DOCKER_CONFIG" build --platform linux/amd64 -f Layer2.Simulator/Dockerfile -t ${local.layer2_image_full} . && \
+      docker --config "$DOCKER_CONFIG" push ${local.layer2_image_full}
     EOT
   }
 
@@ -49,16 +58,20 @@ resource "null_resource" "push_layer1" {
     csproj     = filemd5("${local.repo_root}/Layer1.BatchApi/Layer1.BatchApi.csproj")
     program    = filemd5("${local.repo_root}/Layer1.BatchApi/Program.cs")
     image_tag  = var.image_tag
+    platform   = "linux-amd64"
+    builder    = "local-docker"
+    auth_mode  = "docker-config-auth"
   }
 
   provisioner "local-exec" {
     working_dir = local.repo_root
     command     = <<-EOT
-      docker build -f Layer1.BatchApi/Dockerfile -t ${local.layer1_image} . && \
-      docker login ${azurerm_container_registry.this.login_server} \
-        --username ${azurerm_container_registry.this.admin_username} \
-        --password ${azurerm_container_registry.this.admin_password} && \
-      docker push ${local.layer1_image}
+      export DOCKER_CONFIG="/tmp/two-layer-docker" && \
+      mkdir -p "$DOCKER_CONFIG" && \
+      AUTH=$(printf "%s:%s" "${azurerm_container_registry.this.admin_username}" "${azurerm_container_registry.this.admin_password}" | base64 | tr -d '\n') && \
+      printf '{"auths":{"%s":{"auth":"%s"}}}\n' "${azurerm_container_registry.this.login_server}" "$AUTH" > "$DOCKER_CONFIG/config.json" && \
+      docker --config "$DOCKER_CONFIG" build --platform linux/amd64 -f Layer1.BatchApi/Dockerfile -t ${local.layer1_image_full} . && \
+      docker --config "$DOCKER_CONFIG" push ${local.layer1_image_full}
     EOT
   }
 
@@ -83,7 +96,7 @@ resource "azurerm_linux_web_app" "layer2" {
 
   site_config {
     application_stack {
-      docker_image_name        = local.layer2_image
+      docker_image_name        = local.layer2_image_name
       docker_registry_url      = "https://${azurerm_container_registry.this.login_server}"
       docker_registry_username = azurerm_container_registry.this.admin_username
       docker_registry_password = azurerm_container_registry.this.admin_password
@@ -109,7 +122,7 @@ resource "azurerm_linux_web_app" "layer1" {
 
   site_config {
     application_stack {
-      docker_image_name        = local.layer1_image
+      docker_image_name        = local.layer1_image_name
       docker_registry_url      = "https://${azurerm_container_registry.this.login_server}"
       docker_registry_username = azurerm_container_registry.this.admin_username
       docker_registry_password = azurerm_container_registry.this.admin_password
