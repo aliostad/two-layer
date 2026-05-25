@@ -37,6 +37,18 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "dd_api_key" {
+  type        = string
+  description = "Datadog API key for cloud deployment"
+  sensitive   = true
+}
+
+variable "dd_site" {
+  type        = string
+  description = "Datadog site for cloud deployment"
+  default     = "datadoghq.eu"
+}
+
 variable "tags" {
   type        = map(string)
   description = "Optional tags"

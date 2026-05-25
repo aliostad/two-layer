@@ -6,7 +6,7 @@ locals {
   # App Service expects repository:tag here, not a fully-qualified registry URL.
   layer1_image_name = "layer1-batchapi:${var.image_tag}"
   layer2_image_name = "layer2-simulator:${var.image_tag}"
-  repo_root    = "${path.module}/.."
+  repo_root         = "${path.module}/.."
 }
 
 resource "azurerm_resource_group" "this" {
@@ -104,9 +104,22 @@ resource "azurerm_linux_web_app" "layer2" {
   }
 
   app_settings = {
-    ASPNETCORE_ENVIRONMENT = "Production"
-    ASPNETCORE_URLS        = "http://+:8080"
-    WEBSITES_PORT          = "8080"
+    ASPNETCORE_ENVIRONMENT   = "Production"
+    ASPNETCORE_URLS          = "http://+:8080"
+    WEBSITES_PORT            = "8080"
+    DD_API_KEY               = var.dd_api_key
+    DD_SITE                  = var.dd_site
+    DD_ENV                   = "production"
+    DD_SERVICE               = "layer2-simulator"
+    DD_VERSION               = var.image_tag
+    CORECLR_ENABLE_PROFILING = "1"
+    CORECLR_PROFILER         = "{846F5F1C-F9AE-4B07-969E-05C26BC060D8}"
+    CORECLR_PROFILER_PATH    = "/opt/datadog/Datadog.Trace.ClrProfiler.Native.so"
+    DD_DOTNET_TRACER_HOME    = "/opt/datadog"
+    DD_TRACE_ENABLED         = "true"
+    DD_LOGS_ENABLED          = "true"
+    DD_LOGS_INJECTION        = "true"
+    DD_SOURCE                = "csharp"
   }
 
   tags       = var.tags
@@ -130,10 +143,23 @@ resource "azurerm_linux_web_app" "layer1" {
   }
 
   app_settings = {
-    ASPNETCORE_ENVIRONMENT = "Production"
-    ASPNETCORE_URLS        = "http://+:8080"
-    WEBSITES_PORT          = "8080"
-    Layer2__BaseUrl        = "https://${azurerm_linux_web_app.layer2.default_hostname}"
+    ASPNETCORE_ENVIRONMENT   = "Production"
+    ASPNETCORE_URLS          = "http://+:8080"
+    WEBSITES_PORT            = "8080"
+    Layer2__BaseUrl          = "https://${azurerm_linux_web_app.layer2.default_hostname}"
+    DD_API_KEY               = var.dd_api_key
+    DD_SITE                  = var.dd_site
+    DD_ENV                   = "production"
+    DD_SERVICE               = "layer1-batchapi"
+    DD_VERSION               = var.image_tag
+    CORECLR_ENABLE_PROFILING = "1"
+    CORECLR_PROFILER         = "{846F5F1C-F9AE-4B07-969E-05C26BC060D8}"
+    CORECLR_PROFILER_PATH    = "/opt/datadog/Datadog.Trace.ClrProfiler.Native.so"
+    DD_DOTNET_TRACER_HOME    = "/opt/datadog"
+    DD_TRACE_ENABLED         = "true"
+    DD_LOGS_ENABLED          = "true"
+    DD_LOGS_INJECTION        = "true"
+    DD_SOURCE                = "csharp"
   }
 
   tags       = var.tags

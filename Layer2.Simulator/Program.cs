@@ -1,3 +1,4 @@
+using Datadog.Trace;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,10 @@ app.UseHttpsRedirection();
 
 app.MapPost("/api/simulate", async (SimulationRequest request, DelaySampler sampler, CancellationToken cancellationToken) =>
 {
+    using var scope = Tracer.Instance.StartActive("simulation.handle_request");
+    scope.Span.ResourceName = "POST /api/simulate";
+    scope.Span.SetTag("simulation.operation", request.Operation);
+
     if (string.IsNullOrWhiteSpace(request.Operation))
     {
         return Results.BadRequest(new { message = "Operation is required." });

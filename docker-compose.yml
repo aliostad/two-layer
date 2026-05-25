@@ -4,6 +4,11 @@ services:
       context: .
       dockerfile: Layer2.Simulator/Dockerfile
     image: layer2-simulator:local
+    environment:
+      DD_API_KEY: ${DD_API_KEY:-}
+      DD_SITE: ${DD_SITE:-datadoghq.eu}
+      DD_ENV: local
+      DD_SERVICE: layer2-simulator
     ports:
       - "5196:8080"
 
@@ -14,6 +19,10 @@ services:
     image: layer1-batchapi:local
     environment:
       Layer2__BaseUrl: http://layer2-simulator:8080
+      DD_API_KEY: ${DD_API_KEY:-}
+      DD_SITE: ${DD_SITE:-datadoghq.eu}
+      DD_ENV: local
+      DD_SERVICE: layer1-batchapi
     ports:
       - "5007:8080"
     depends_on:

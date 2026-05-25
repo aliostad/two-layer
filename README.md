@@ -42,6 +42,8 @@ Default local URLs from launch settings:
 Build and run both services using Docker Compose:
 
 ```bash
+export DD_API_KEY=<your_datadog_api_key>
+export DD_SITE=datadoghq.eu
 docker compose up --build
 ```
 
@@ -55,6 +57,14 @@ Stop:
 ```bash
 docker compose down
 ```
+
+### Datadog profiling notes
+
+- Both service Docker images install Datadog .NET auto-instrumentation and enable continuous profiling.
+- Both containers use Datadog `serverless-init` as entrypoint and run the .NET app via container `CMD`.
+- `DD_API_KEY` is intentionally runtime-injected (for example via environment variable) and not baked into images.
+- `DD_SITE` is configurable at runtime (defaults to `datadoghq.eu` in docker-compose).
+- Service-level Datadog config placeholders are available in each appsettings file under `Datadog`.
 
 ## Build container images manually
 

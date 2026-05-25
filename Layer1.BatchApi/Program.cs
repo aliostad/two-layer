@@ -1,3 +1,4 @@
+using Datadog.Trace;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Options;
 
@@ -81,6 +82,11 @@ static async Task ProcessItemAsync(
 
     try
     {
+        using var scope = Tracer.Instance.StartActive("batch.process_item");
+        scope.Span.ResourceName = $"item:{item.Operation}";
+        scope.Span.SetTag("batch.item.id", item.Id);
+        scope.Span.SetTag("batch.item.operation", item.Operation);
+
         if (string.IsNullOrWhiteSpace(item.Operation))
         {
             results[index] = new BatchItemResult(item.Id, item.Operation, BatchItemStatus.Failed, null, "Operation is required.");
@@ -137,6 +143,11 @@ internal sealed class Layer2Client(HttpClient httpClient)
 {
     public async Task<Layer2SimulationResponse> SimulateAsync(string operation, CancellationToken cancellationToken)
     {
+        using var scope = Tracer.Instance.StartActive("layer2.simulate");
+        scope.Span.Type = SpanTypes.Http;
+        scope.Span.ResourceName = "POST /api/simulate";
+        scope.Span.SetTag("layer2.operation", operation);
+
         using var response = await httpClient.PostAsJsonAsync("/api/simulate", new Layer2SimulationRequest(operation), cancellationToken);
 
         if (response.IsSuccessStatusCode)
