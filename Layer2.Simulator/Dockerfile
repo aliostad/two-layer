@@ -18,6 +18,7 @@ RUN set -eux; \
 		if apt-get update && apt-get install -y --no-install-recommends --fix-missing curl ca-certificates gnupg; then \
 			break; \
 		fi; \
+		apt-get install -f -y || true; \
 		echo "Base apt install failed on attempt ${attempt}, retrying..."; \
 		if [ "${attempt}" -eq 5 ]; then \
 			echo "Base apt install failed after retries"; \
@@ -33,6 +34,7 @@ RUN set -eux; \
 		if apt-get update && apt-get install -y --no-install-recommends --fix-missing datadog-apm-library-dotnet; then \
 			break; \
 		fi; \
+		apt-get install -f -y || true; \
 		echo "Datadog apt install failed on attempt ${attempt}, retrying..."; \
 		if [ "${attempt}" -eq 5 ]; then \
 			echo "Datadog apt install failed after retries"; \
@@ -45,9 +47,8 @@ RUN set -eux; \
 ENV ASPNETCORE_URLS=http://+:8080
 ENV CORECLR_ENABLE_PROFILING=1
 ENV CORECLR_PROFILER={846F5F1C-F9AE-4B07-969E-05C26BC060D8}
-ENV CORECLR_PROFILER_PATH=/opt/datadog/Datadog.Trace.ClrProfiler.Native.so
-ENV DD_DOTNET_TRACER_HOME=/opt/datadog
-ENV DD_INTEGRATIONS=/opt/datadog/integrations.json
+ENV CORECLR_PROFILER_PATH=/opt/datadog/apm/library/dotnet/Datadog.Trace.ClrProfiler.Native.so
+ENV DD_DOTNET_TRACER_HOME=/opt/datadog/apm/library/dotnet
 ENV DD_PROFILING_ENABLED=1
 ENV DD_SERVICE=layer2-simulator
 ENV DD_ENV=local
@@ -55,6 +56,8 @@ ENV DD_VERSION=1.0.0
 ENV DD_LOGS_ENABLED=true
 ENV DD_LOGS_INJECTION=true
 ENV DD_SOURCE=csharp
+ENV DD_TRACE_DEBUG=true
+
 EXPOSE 8080
 
 ENTRYPOINT ["/app/datadog-init"]
